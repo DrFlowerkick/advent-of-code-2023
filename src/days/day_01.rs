@@ -2,7 +2,8 @@
 
 use anyhow::Result;
 
-pub fn day_01(input: &str) -> Result<()> {
+pub fn day_01() -> Result<()> {
+    let input = include_str!("../../assets/day_01.txt");
     part_1(input)?;
     part_2(input)
 }
