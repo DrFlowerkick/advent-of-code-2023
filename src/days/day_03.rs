@@ -1,8 +1,8 @@
 //!day_03.rs
 
-use my_lib::my_map_two_dim::MyMap2D;
-use my_lib::my_map_point::MapPoint;
 use anyhow::Result;
+use my_lib::my_map_point::MapPoint;
+use my_lib::my_map_two_dim::MyMap2D;
 
 // number of chars in one line of day_03.txt
 const X: usize = 140;
@@ -57,12 +57,16 @@ pub fn day_03() -> Result<()> {
             last_is_digit = false;
             digits = "".into();
         }
-        
+
         if cell.val.is_ascii_digit() {
             digits.push(cell.val);
             last_is_digit = true;
             // check for is_part_number
-            is_part_number = is_part_number || char_map.iter_neighbors_with_corners(point).find(|(_, c, _)| c.val != '.' && !c.val.is_ascii_digit()).is_some();
+            is_part_number = is_part_number
+                || char_map
+                    .iter_neighbors_with_corners(point)
+                    .find(|(_, c, _)| c.val != '.' && !c.val.is_ascii_digit())
+                    .is_some();
         } else {
             if is_part_number {
                 result_part1 += digits.parse::<u32>()?;
@@ -75,12 +79,28 @@ pub fn day_03() -> Result<()> {
         }
         // Part 2
         if cell.val == '*' {
-            let mut ids: Vec<u32> = char_map.iter_neighbors_with_corners(point).filter(|(_, c, _)| c.id > 0).map(|(_, c, _)| c.id).collect();
+            let mut ids: Vec<u32> = char_map
+                .iter_neighbors_with_corners(point)
+                .filter(|(_, c, _)| c.id > 0)
+                .map(|(_, c, _)| c.id)
+                .collect();
             ids.sort();
             ids.dedup();
             if ids.len() == 2 {
-                let digits_id0 = String::from_iter(char_map.iter().filter(|(_, c)| c.id == ids[0]).map(|(_, c)| c.val)).parse::<u32>()?;
-                let digits_id1 = String::from_iter(char_map.iter().filter(|(_, c)| c.id == ids[1]).map(|(_, c)| c.val)).parse::<u32>()?;
+                let digits_id0 = String::from_iter(
+                    char_map
+                        .iter()
+                        .filter(|(_, c)| c.id == ids[0])
+                        .map(|(_, c)| c.val),
+                )
+                .parse::<u32>()?;
+                let digits_id1 = String::from_iter(
+                    char_map
+                        .iter()
+                        .filter(|(_, c)| c.id == ids[1])
+                        .map(|(_, c)| c.val),
+                )
+                .parse::<u32>()?;
                 result_part2 += digits_id0 * digits_id1;
             }
         }

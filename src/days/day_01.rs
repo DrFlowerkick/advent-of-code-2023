@@ -11,24 +11,29 @@ pub fn day_01() -> Result<()> {
 fn part_1(input: &str) -> Result<()> {
     let sum: u32 = input
         .lines()
-        .map(|l| {
-            match l.chars().filter(|c| c.is_ascii_digit()).next() {
-                Some(left) => {
-                    let right = l.chars().rev().filter(|c| c.is_ascii_digit()).next().unwrap();
-                    let mut number = String::new();
-                    number.push(left);
-                    number.push(right);
-                    number.parse::<u32>().unwrap()
-                },
-                None => 0,
+        .map(|l| match l.chars().filter(|c| c.is_ascii_digit()).next() {
+            Some(left) => {
+                let right = l
+                    .chars()
+                    .rev()
+                    .filter(|c| c.is_ascii_digit())
+                    .next()
+                    .unwrap();
+                let mut number = String::new();
+                number.push(left);
+                number.push(right);
+                number.parse::<u32>().unwrap()
             }
+            None => 0,
         })
         .sum();
     println!("result day 01 part 1: {}", sum);
     Ok(())
 }
 
-const DIGITS: [&str; 9] = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+const DIGITS: [&str; 9] = [
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+];
 const CHARS: [char; 9] = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 pub fn part_2(input: &str) -> Result<()> {
@@ -70,7 +75,9 @@ pub fn part_2(input: &str) -> Result<()> {
             let mut number = String::new();
             number.push(left);
             number.push(right);
-            number.parse::<u32>().expect(&format!("could not parse {}{}", left, right))
+            number
+                .parse::<u32>()
+                .expect(&format!("could not parse {}{}", left, right))
         })
         .sum();
     println!("result day 01 part 2: {}", sum);

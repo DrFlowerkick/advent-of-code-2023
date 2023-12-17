@@ -1,6 +1,6 @@
 //!day_02.rs
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 #[derive(Default)]
 struct Cubes {
@@ -36,7 +36,6 @@ impl Cubes {
         self.red * self.green * self.blue
     }
 }
-
 
 pub fn day_02() -> Result<()> {
     let input = include_str!("../../assets/day_02.txt");
