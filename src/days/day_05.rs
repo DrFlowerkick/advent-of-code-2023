@@ -162,14 +162,14 @@ pub fn day_05() -> Result<()> {
     println!("result day 05 part 1: {}", lowest_location);
 
     // Part 2
-    
+
     #[cfg(feature = "long-run-time")]
     {
         let mut seed_iter = seeds.iter();
         let mut lowest_location = u64::MAX;
         while let Some(&start_seed) = seed_iter.next() {
             let &seed_range = seed_iter.next().expect("bad input");
-            for seed in start_seed..start_seed+seed_range {
+            for seed in start_seed..start_seed + seed_range {
                 let location = transfer_maps.get_location(seed);
                 lowest_location = lowest_location.min(location);
             }
