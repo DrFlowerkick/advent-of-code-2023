@@ -12,7 +12,7 @@ trait PlayingCard {
     fn joker_index(&self) -> Option<usize> {
         None
     }
-} 
+}
 
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 enum NoJokers {
@@ -166,7 +166,8 @@ impl Default for HandType {
 
 impl HandType {
     fn from_hand<C>(hand: &[C; 5]) -> Self
-    where C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default
+    where
+        C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default,
     {
         let mut card_count: Vec<u8> = vec![0; hand[0].num_card_types()];
         for card in hand.iter() {
@@ -174,34 +175,36 @@ impl HandType {
         }
 
         match hand[0].joker_index() {
-            Some(ji) => if card_count[ji] == 0 {
-                HandType::no_jokers_in_hand(&card_count)
-            } else {
-                let num_jokers = card_count.remove(ji);
-                match num_jokers {
-                    5 | 4 => HandType::FiveOfAKind,
-                    3 => match HandType::no_jokers_in_hand(&card_count) {
-                        HandType::OnePair => HandType::FiveOfAKind,
-                        HandType::HighCard => HandType::FourOfAKind,
-                        _ => panic!("invalid hand type"),
-                    },
-                    2 => match HandType::no_jokers_in_hand(&card_count) {
-                        HandType::ThreeOfAKind => HandType::FiveOfAKind,
-                        HandType::OnePair => HandType::FourOfAKind,
-                        HandType::HighCard => HandType::ThreeOfAKind,
-                        _ => panic!("invalid hand type"),
-                    },
-                    1 => match HandType::no_jokers_in_hand(&card_count) {
-                        HandType::FourOfAKind => HandType::FiveOfAKind,
-                        HandType::ThreeOfAKind => HandType::FourOfAKind,
-                        HandType::TwoPair => HandType::FullHouse,
-                        HandType::OnePair => HandType::ThreeOfAKind,
-                        HandType::HighCard => HandType::OnePair,
-                        _ => panic!("invalid hand type"),
-                    },
-                    _ => panic!("invalid number of jokers"),
+            Some(ji) => {
+                if card_count[ji] == 0 {
+                    HandType::no_jokers_in_hand(&card_count)
+                } else {
+                    let num_jokers = card_count.remove(ji);
+                    match num_jokers {
+                        5 | 4 => HandType::FiveOfAKind,
+                        3 => match HandType::no_jokers_in_hand(&card_count) {
+                            HandType::OnePair => HandType::FiveOfAKind,
+                            HandType::HighCard => HandType::FourOfAKind,
+                            _ => panic!("invalid hand type"),
+                        },
+                        2 => match HandType::no_jokers_in_hand(&card_count) {
+                            HandType::ThreeOfAKind => HandType::FiveOfAKind,
+                            HandType::OnePair => HandType::FourOfAKind,
+                            HandType::HighCard => HandType::ThreeOfAKind,
+                            _ => panic!("invalid hand type"),
+                        },
+                        1 => match HandType::no_jokers_in_hand(&card_count) {
+                            HandType::FourOfAKind => HandType::FiveOfAKind,
+                            HandType::ThreeOfAKind => HandType::FourOfAKind,
+                            HandType::TwoPair => HandType::FullHouse,
+                            HandType::OnePair => HandType::ThreeOfAKind,
+                            HandType::HighCard => HandType::OnePair,
+                            _ => panic!("invalid hand type"),
+                        },
+                        _ => panic!("invalid number of jokers"),
+                    }
                 }
-            },
+            }
             None => HandType::no_jokers_in_hand(&card_count),
         }
     }
@@ -231,23 +234,23 @@ struct CardHand<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + F
     hand_type: HandType,
 }
 
-impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> PartialEq for CardHand<C> {
+impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> PartialEq
+    for CardHand<C>
+{
     fn eq(&self, other: &Self) -> bool {
         self.hand == other.hand
     }
 }
 
-impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> Ord for CardHand<C> {
+impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> Ord
+    for CardHand<C>
+{
     fn cmp(&self, other: &Self) -> Ordering {
         match self.hand_type.cmp(&other.hand_type) {
             Ordering::Greater => Ordering::Greater,
             Ordering::Less => Ordering::Less,
             Ordering::Equal => {
-                for (s, o) in self
-                    .hand
-                    .iter()
-                    .zip(other.hand.iter())
-                {
+                for (s, o) in self.hand.iter().zip(other.hand.iter()) {
                     match s.cmp(&o) {
                         Ordering::Greater => return Ordering::Greater,
                         Ordering::Less => return Ordering::Less,
@@ -260,7 +263,9 @@ impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> 
     }
 }
 
-impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> PartialOrd for CardHand<C> {
+impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> PartialOrd
+    for CardHand<C>
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }

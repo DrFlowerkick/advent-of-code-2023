@@ -1,8 +1,8 @@
 //!day_08.RS
 
-use std::collections::HashMap;
 use anyhow::Result;
 use num::integer::lcm;
+use std::collections::HashMap;
 
 struct Instructions {
     left: String,
@@ -31,7 +31,10 @@ pub fn day_08() -> Result<()> {
         let (key, value) = line.split_once('=').unwrap();
         let trim_value = |c: char| !c.is_alphabetic();
         let (left, right) = value.trim_matches(trim_value).split_once(',').unwrap();
-        map.insert(key.trim().to_string(), Instructions::new(left.trim().to_string(), right.trim().to_string()));
+        map.insert(
+            key.trim().to_string(),
+            Instructions::new(left.trim().to_string(), right.trim().to_string()),
+        );
     }
 
     // part 1
@@ -40,32 +43,44 @@ pub fn day_08() -> Result<()> {
     // direction: false -> left; true -> right
     for direction in directions.chars().map(|c| c == 'R').cycle() {
         steps += 1;
-        current_key = map.get(&current_key).unwrap().direction(direction).to_owned();
+        current_key = map
+            .get(&current_key)
+            .unwrap()
+            .direction(direction)
+            .to_owned();
         if current_key == "ZZZ" {
-            break
+            break;
         }
-    };
+    }
     println!("result day 08 part 1: {}", steps);
 
     // part 2
     // hint for solution: every path from each starting node to it's corresponding ending node
     // cycles in a fixed cycle, respectivly.
     // the solution is to identify the cycles and than calc the Lowest Common Multiple (LCM) of them
-    let current_keys: Vec<String> = map.keys().filter(|k| k.ends_with('A')).map(|k| k.to_owned()).collect();
+    let current_keys: Vec<String> = map
+        .keys()
+        .filter(|k| k.ends_with('A'))
+        .map(|k| k.to_owned())
+        .collect();
     let mut steps_per_key: Vec<u64> = Vec::with_capacity(current_keys.len());
-    
+
     for start_key in current_keys.iter() {
         current_key = start_key.clone();
         steps = 0;
         // direction: false -> left; true -> right
         for direction in directions.chars().map(|c| c == 'R').cycle() {
             steps += 1;
-            current_key = map.get(&current_key).unwrap().direction(direction).to_owned();
+            current_key = map
+                .get(&current_key)
+                .unwrap()
+                .direction(direction)
+                .to_owned();
 
             if current_key.ends_with('Z') {
-                break
+                break;
             }
-        };
+        }
         steps_per_key.push(steps);
     }
 
@@ -75,6 +90,6 @@ pub fn day_08() -> Result<()> {
         lcm_step = lcm(lcm_step, *next_key);
     }
     println!("result day 08 part 2: {}", lcm_step);
-    
+
     Ok(())
 }
