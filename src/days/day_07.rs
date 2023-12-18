@@ -322,7 +322,7 @@ pub fn day_07() -> Result<()> {
     {
         result_part2 += rank * bid;
     }
-    println!("result day 07 part 1: {}", result_part2);
+    println!("result day 07 part 2: {}", result_part2);
 
     Ok(())
 }

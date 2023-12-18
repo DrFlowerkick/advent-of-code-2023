@@ -163,7 +163,7 @@ pub fn day_05() -> Result<()> {
 
     // Part 2
 
-    #[cfg(feature = "long-run-time")]
+    #[cfg(feature = "long-run-time-day-05")]
     {
         let mut seed_iter = seeds.iter();
         let mut lowest_location = u64::MAX;
@@ -177,7 +177,7 @@ pub fn day_05() -> Result<()> {
         println!("result day 05 part 2: {}", lowest_location);
     }
 
-    if !cfg!(feature = "long-run-time") {
+    if !cfg!(feature = "long-run-time-day-05") {
         println!("result day 05 part 2: skipped because of long run time.");
     }
 
