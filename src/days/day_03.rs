@@ -8,8 +8,6 @@ use my_lib::my_map_two_dim::MyMap2D;
 const X: usize = 140;
 // number of lines in day_03.txt
 const Y: usize = 140;
-// number of chars in day_03.txt
-const N: usize = X * Y;
 
 #[derive(Copy, Clone, Default)]
 struct Cell {
@@ -19,7 +17,7 @@ struct Cell {
 
 pub fn day_03() -> Result<()> {
     let input = include_str!("../../assets/day_03.txt");
-    let mut char_map: MyMap2D<Cell, X, Y, N> = MyMap2D::default();
+    let mut char_map: MyMap2D<Cell, X, Y> = MyMap2D::default();
     let mut id = 1;
     let mut last_is_digit = false;
     for (y, line) in input.lines().enumerate() {
@@ -65,7 +63,7 @@ pub fn day_03() -> Result<()> {
             is_part_number = is_part_number
                 || char_map
                     .iter_neighbors_with_corners(point)
-                    .find(|(_, c, _)| c.val != '.' && !c.val.is_ascii_digit())
+                    .find(|(_, _, c)| c.val != '.' && !c.val.is_ascii_digit())
                     .is_some();
         } else {
             if is_part_number {
@@ -81,8 +79,8 @@ pub fn day_03() -> Result<()> {
         if cell.val == '*' {
             let mut ids: Vec<u32> = char_map
                 .iter_neighbors_with_corners(point)
-                .filter(|(_, c, _)| c.id > 0)
-                .map(|(_, c, _)| c.id)
+                .filter(|(_, _, c)| c.id > 0)
+                .map(|(_, _, c)| c.id)
                 .collect();
             ids.sort();
             ids.dedup();
