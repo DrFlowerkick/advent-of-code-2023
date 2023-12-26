@@ -1,41 +1,80 @@
 //!day_05.rs
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 
-#[derive(Default)]
-struct TransferMap {
-    destination_start: u64,
-    source_start: u64,
+#[derive(Clone, Copy)]
+struct CategoryRange {
+    start: u64,
     range: u64,
 }
 
-impl TransferMap {
-    fn from_str(input: &str) -> Result<Self> {
-        let mut result = Self::default();
-        let mut input_iter = input.split_ascii_whitespace();
-        match input_iter.next() {
-            Some(ds) => result.destination_start = ds.parse::<u64>()?,
-            None => return Err(anyhow!("bad input")),
-        }
-        match input_iter.next() {
-            Some(ss) => result.source_start = ss.parse::<u64>()?,
-            None => return Err(anyhow!("bad input")),
-        }
-        match input_iter.next() {
-            Some(r) => result.range = r.parse::<u64>()?,
-            None => return Err(anyhow!("bad input")),
-        }
-        match input_iter.next() {
-            Some(_) => return Err(anyhow!("bad input")),
-            None => Ok(result),
+impl CategoryRange {
+    fn single(value: u64) -> Self {
+        CategoryRange {
+            start: value,
+            range: 1,
         }
     }
-    fn get_destination(&self, source: u64) -> Option<u64> {
-        if self.source_start <= source && source < self.source_start + self.range {
-            Some(self.destination_start + source - self.source_start)
-        } else {
-            None
+    fn new(start: u64, range: u64) -> Self {
+        CategoryRange {
+            start,
+            range,
         }
+    }
+    fn end(&self) -> u64 {
+        self.start + self.range - 1
+    }
+}
+
+struct TransferMap {
+    source: CategoryRange,
+    destination: CategoryRange,
+}
+
+impl From<&str> for TransferMap {
+    fn from(value: &str) -> Self {
+        let mut value_iter = value.split_ascii_whitespace();
+        let destination_start = match value_iter.next() {
+            Some(ds) => ds.parse::<u64>().expect("bad input"),
+            None => panic!("bad input"),
+        };
+        let source_start = match value_iter.next() {
+            Some(ss) => ss.parse::<u64>().expect("bad input"),
+            None => panic!("bad input"),
+        };
+        let range = match value_iter.next() {
+            Some(r) => r.parse::<u64>().expect("bad input"),
+            None => panic!("bad input"),
+        };
+        match value_iter.next() {
+            Some(_) => panic!("bad input"),
+            None => (),
+        }
+        Self {
+            source: CategoryRange::new(source_start, range),
+            destination: CategoryRange::new(destination_start, range),
+        }
+    }
+}
+
+impl TransferMap {
+    fn transfer_category_range(&self, input_range: &CategoryRange) -> Option<(CategoryRange, Vec<CategoryRange>)> {
+        let overlapping_start = input_range.start.max(self.source.start);
+        let overlapping_end = input_range.end().min(self.source.end());
+        if overlapping_start <= overlapping_end {
+            let overlaping_range = CategoryRange::new(overlapping_start + self.destination.start - self.source.start, overlapping_end - overlapping_start + 1);
+            let mut remaining_ranges: Vec<CategoryRange> = Vec::new();
+            if input_range.start < overlapping_start {
+                let pre_range = CategoryRange::new(input_range.start, overlapping_start - input_range.start);
+                remaining_ranges.push(pre_range);
+            }
+            if input_range.end() > overlapping_end {
+                let post_range = CategoryRange::new(overlapping_end + 1, input_range.end() - overlapping_end);
+                remaining_ranges.push(post_range);
+            }
+            return Some((overlaping_range, remaining_ranges));
+        }
+        None
     }
 }
 
@@ -108,35 +147,44 @@ impl TransferMapSet {
     fn add_transfer_map(&mut self, map: TransferMap, map_type: TransferMapType) {
         self.get_trans_map_mut(map_type).push(map);
     }
-    fn get_destination(&self, source: u64, map_type: TransferMapType) -> u64 {
-        let transfer_map = self.get_trans_map(map_type);
-        for map in transfer_map.iter() {
-            match map.get_destination(source) {
-                Some(dest) => return dest,
-                None => (),
-            }
-        }
-        source
-    }
-    fn get_location(&self, seed: u64) -> u64 {
+
+    fn get_min_location_from_seed_ranges(&self, mut seed_ranges: Vec<CategoryRange>) -> u64 {
         let mut map_type = Some(TransferMapType::default());
-        let mut location = seed;
         while let Some(tmt) = map_type {
-            location = self.get_destination(location, tmt);
+            let mut transfered_ranges: Vec<CategoryRange> = Vec::new();
+            while let Some(input_range) = seed_ranges.pop() {
+                let mut no_transfer = true;
+                for transfer_map in self.get_trans_map(tmt).iter() {
+                    if let Some((transfered_range, remaining_ranges)) = transfer_map.transfer_category_range(&input_range) {
+                        transfered_ranges.push(transfered_range);
+                        seed_ranges.extend_from_slice(&remaining_ranges[..]);
+                        no_transfer = false;
+                        break;
+                    }
+                }
+                if no_transfer {
+                    transfered_ranges.push(input_range);
+                }
+            }
+            seed_ranges = transfered_ranges;
             map_type = tmt.next();
         }
-        location
+        seed_ranges.iter().map(|cr| cr.start).min().unwrap()
     }
 }
+
+// The solution is an implementation in Rust of https://www.youtube.com/watch?v=NmxHw_bHhGM by HyperNeutrino
+// www.youtube.com/@hyper-neutrino
+// github.com/hyper-neutrino
 
 pub fn day_05() -> Result<()> {
     let input = include_str!("../../assets/day_05.txt");
     let mut transfer_maps = TransferMapSet::default();
-    let mut seeds: Vec<u64> = Vec::new();
+    let mut seed_input: Vec<u64> = Vec::new();
     let mut transfer_map_type: Option<TransferMapType> = None;
     for line in input.lines().filter(|l| !l.is_empty()) {
-        if seeds.len() == 0 {
-            seeds = line
+        if seed_input.len() == 0 {
+            seed_input = line
                 .split_once(':')
                 .unwrap()
                 .1
@@ -150,36 +198,24 @@ pub fn day_05() -> Result<()> {
                 None => Some(TransferMapType::default()),
             };
         } else if let Some(tmt) = transfer_map_type {
-            transfer_maps.add_transfer_map(TransferMap::from_str(line)?, tmt);
+            transfer_maps.add_transfer_map(TransferMap::from(line), tmt);
         }
     }
 
-    let mut lowest_location = u64::MAX;
-    for seed in seeds.iter() {
-        let location = transfer_maps.get_location(*seed);
-        lowest_location = lowest_location.min(location);
-    }
+    let seeds: Vec<CategoryRange> = seed_input.iter().map(|s| CategoryRange::single(*s)).collect();
+
+    let  lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
     println!("result day 05 part 1: {}", lowest_location);
 
     // Part 2
-
-    #[cfg(feature = "long-run-time-day-05")]
-    {
-        let mut seed_iter = seeds.iter();
-        let mut lowest_location = u64::MAX;
-        while let Some(&start_seed) = seed_iter.next() {
-            let &seed_range = seed_iter.next().expect("bad input");
-            for seed in start_seed..start_seed + seed_range {
-                let location = transfer_maps.get_location(seed);
-                lowest_location = lowest_location.min(location);
-            }
-        }
-        println!("result day 05 part 2: {}", lowest_location);
+    let mut seeds: Vec<CategoryRange> = Vec::new();
+    let mut seed_iter = seed_input.iter();
+    while let Some(&start_seed) = seed_iter.next() {
+        let &seed_range = seed_iter.next().expect("bad input");
+        seeds.push(CategoryRange::new(start_seed, seed_range));
     }
-
-    if !cfg!(feature = "long-run-time-day-05") {
-        println!("result day 05 part 2: skipped because of long run time.");
-    }
+    let lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
+    println!("result day 05 part 2: {}", lowest_location);
 
     Ok(())
 }

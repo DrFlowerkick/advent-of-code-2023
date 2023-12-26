@@ -5,12 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[features]
-default = ["only-short-time"]
-only-short-time = []
-long-run-time-day-05 = []
-all = ["only-short-time", "long-run-time-day-05"]
-
 [dependencies]
 anyhow = "1.0.75"
 my_lib = { path = "../mylib" }

@@ -1,4 +1,3 @@
 {
-    "files.eol": "\n",
-    "rust-analyzer.cargo.features": ["all"]
+    "files.eol": "\n"
 }
