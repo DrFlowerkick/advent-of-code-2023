@@ -16,10 +16,7 @@ impl CategoryRange {
         }
     }
     fn new(start: u64, range: u64) -> Self {
-        CategoryRange {
-            start,
-            range,
-        }
+        CategoryRange { start, range }
     }
     fn end(&self) -> u64 {
         self.start + self.range - 1
@@ -58,18 +55,26 @@ impl From<&str> for TransferMap {
 }
 
 impl TransferMap {
-    fn transfer_category_range(&self, input_range: &CategoryRange) -> Option<(CategoryRange, Vec<CategoryRange>)> {
+    fn transfer_category_range(
+        &self,
+        input_range: &CategoryRange,
+    ) -> Option<(CategoryRange, Vec<CategoryRange>)> {
         let overlapping_start = input_range.start.max(self.source.start);
         let overlapping_end = input_range.end().min(self.source.end());
         if overlapping_start <= overlapping_end {
-            let overlaping_range = CategoryRange::new(overlapping_start + self.destination.start - self.source.start, overlapping_end - overlapping_start + 1);
+            let overlaping_range = CategoryRange::new(
+                overlapping_start + self.destination.start - self.source.start,
+                overlapping_end - overlapping_start + 1,
+            );
             let mut remaining_ranges: Vec<CategoryRange> = Vec::new();
             if input_range.start < overlapping_start {
-                let pre_range = CategoryRange::new(input_range.start, overlapping_start - input_range.start);
+                let pre_range =
+                    CategoryRange::new(input_range.start, overlapping_start - input_range.start);
                 remaining_ranges.push(pre_range);
             }
             if input_range.end() > overlapping_end {
-                let post_range = CategoryRange::new(overlapping_end + 1, input_range.end() - overlapping_end);
+                let post_range =
+                    CategoryRange::new(overlapping_end + 1, input_range.end() - overlapping_end);
                 remaining_ranges.push(post_range);
             }
             return Some((overlaping_range, remaining_ranges));
@@ -155,7 +160,9 @@ impl TransferMapSet {
             while let Some(input_range) = seed_ranges.pop() {
                 let mut no_transfer = true;
                 for transfer_map in self.get_trans_map(tmt).iter() {
-                    if let Some((transfered_range, remaining_ranges)) = transfer_map.transfer_category_range(&input_range) {
+                    if let Some((transfered_range, remaining_ranges)) =
+                        transfer_map.transfer_category_range(&input_range)
+                    {
                         transfered_ranges.push(transfered_range);
                         seed_ranges.extend_from_slice(&remaining_ranges[..]);
                         no_transfer = false;
@@ -202,9 +209,12 @@ pub fn day_05() -> Result<()> {
         }
     }
 
-    let seeds: Vec<CategoryRange> = seed_input.iter().map(|s| CategoryRange::single(*s)).collect();
+    let seeds: Vec<CategoryRange> = seed_input
+        .iter()
+        .map(|s| CategoryRange::single(*s))
+        .collect();
 
-    let  lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
+    let lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
     println!("result day 05 part 1: {}", lowest_location);
 
     // Part 2

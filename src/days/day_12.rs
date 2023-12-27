@@ -41,7 +41,6 @@ fn unfold_springs_and_damaged_clusters(
     (unfolded_springs, unfolded_damaged_clusters)
 }
 
-
 // this solution is an implementation in Rust of https://www.youtube.com/watch?v=g3Ms5e7Jdqo by HyperNeutrino
 // www.youtube.com/@hyper-neutrino
 // github.com/hyper-neutrino
