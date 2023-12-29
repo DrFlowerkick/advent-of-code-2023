@@ -15,7 +15,7 @@ fn calc_next_in_sequence(sequence: &mut Vec<i64>) {
         delta_sequence.push(result);
         last_value = *value;
     }
-    if delta_sequence.iter().find(|v| **v != 0).is_none() {
+    if !delta_sequence.iter().any(|v| *v != 0) {
         // found final sequence; do final pushes because it fulfills the described algo
         delta_sequence.push(0);
         delta_sequence.push(0);
@@ -45,7 +45,9 @@ pub fn day_09() -> Result<()> {
         result_part2 += sequence[0];
     }
     println!("result day 09 part 1: {}", result_part1);
+    assert_eq!(result_part1, 2_038_472_161);
     println!("result day 09 part 2: {}", result_part2);
+    assert_eq!(result_part2, 1_091);
 
     Ok(())
 }

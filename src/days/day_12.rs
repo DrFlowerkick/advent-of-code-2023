@@ -12,9 +12,7 @@ fn springs_and_damaged_clusters(input: &str) -> (&str, Vec<usize>) {
             if springs
                 .trim()
                 .chars()
-                .filter(|c| !*(&['.', '#', '?'].contains(c)))
-                .next()
-                .is_some()
+                .any(|c| !['.', '#', '?'].contains(&c))
             {
                 panic!("bad spring char");
             }
@@ -50,15 +48,15 @@ fn different_arrangements(
     cache: &mut HashMap<(String, Vec<usize>), usize>,
 ) -> usize {
     // no more springs left
-    if springs.len() == 0 {
-        if damaged_clusters.len() == 0 {
+    if springs.is_empty() {
+        if damaged_clusters.is_empty() {
             return 1;
         } else {
             return 0;
         }
     }
     // no more damaged clusters left
-    if damaged_clusters.len() == 0 {
+    if damaged_clusters.is_empty() {
         if springs.contains('#') {
             return 0;
         } else {
@@ -77,28 +75,26 @@ fn different_arrangements(
     let mut num_different_arrangements = 0;
 
     // pretend '?' as operational spring
-    if springs[0..1].contains(&['.', '?']) {
+    if springs[0..1].contains(['.', '?']) {
         num_different_arrangements +=
             different_arrangements(&springs[1..], damaged_clusters, cache);
     }
 
     // pretend '?' as damaged spring
-    if springs[0..1].contains(&['#', '?']) {
-        if damaged_clusters[0] <= springs.chars().count()
-            && !springs[..damaged_clusters[0]].contains('.')
-        {
-            if damaged_clusters[0] == springs.chars().count() {
-                // if end of springs, call different_arrangements with "" to check len() of damaged_clusters
-                num_different_arrangements +=
-                    different_arrangements("", &damaged_clusters[1..], cache)
-            } else if springs.chars().nth(damaged_clusters[0]).unwrap() != '#' {
-                // if remaining springs, call different_arrangements with remaining springs and damaged_clusters
-                num_different_arrangements += different_arrangements(
-                    &springs[(damaged_clusters[0] + 1)..],
-                    &damaged_clusters[1..],
-                    cache,
-                );
-            }
+    if springs[0..1].contains(['#', '?'])
+        && damaged_clusters[0] <= springs.chars().count()
+        && !springs[..damaged_clusters[0]].contains('.')
+    {
+        if damaged_clusters[0] == springs.chars().count() {
+            // if end of springs, call different_arrangements with "" to check len() of damaged_clusters
+            num_different_arrangements += different_arrangements("", &damaged_clusters[1..], cache)
+        } else if springs.chars().nth(damaged_clusters[0]).unwrap() != '#' {
+            // if remaining springs, call different_arrangements with remaining springs and damaged_clusters
+            num_different_arrangements += different_arrangements(
+                &springs[(damaged_clusters[0] + 1)..],
+                &damaged_clusters[1..],
+                cache,
+            );
         }
     }
     // insert current result into cache for later use
@@ -118,7 +114,7 @@ pub fn day_12() -> Result<()> {
     for line in input.lines() {
         let (springs, damaged_clusters) = springs_and_damaged_clusters(line);
         sum_different_arrangements +=
-            different_arrangements(&springs[..], &damaged_clusters[..], &mut cache);
+            different_arrangements(springs, &damaged_clusters[..], &mut cache);
         let (unfolded_springs, unfolded_damaged_clusters) =
             unfold_springs_and_damaged_clusters(springs, &damaged_clusters);
         sum_different_arrangements_unfolded += different_arrangements(
@@ -129,10 +125,12 @@ pub fn day_12() -> Result<()> {
     }
 
     println!("result day 12 part 1: {}", sum_different_arrangements);
+    assert_eq!(sum_different_arrangements, 7_460);
     println!(
         "result day 12 part 2: {}",
         sum_different_arrangements_unfolded
     );
+    assert_eq!(sum_different_arrangements_unfolded, 6_720_660_274_964);
 
     Ok(())
 }

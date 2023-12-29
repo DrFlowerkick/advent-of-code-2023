@@ -43,9 +43,8 @@ impl From<&str> for TransferMap {
             Some(r) => r.parse::<u64>().expect("bad input"),
             None => panic!("bad input"),
         };
-        match value_iter.next() {
-            Some(_) => panic!("bad input"),
-            None => (),
+        if value_iter.next().is_some() {
+            panic!("bad input");
         }
         Self {
             source: CategoryRange::new(source_start, range),
@@ -83,8 +82,9 @@ impl TransferMap {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 enum TransferMapType {
+    #[default]
     SeedToSoil,
     SoilToFertilizer,
     FertilizerToWater,
@@ -92,12 +92,6 @@ enum TransferMapType {
     LightToTemperature,
     TemperatureToHumidity,
     HumidityToLocation,
-}
-
-impl Default for TransferMapType {
-    fn default() -> Self {
-        TransferMapType::SeedToSoil
-    }
 }
 
 impl TransferMapType {
@@ -190,7 +184,7 @@ pub fn day_05() -> Result<()> {
     let mut seed_input: Vec<u64> = Vec::new();
     let mut transfer_map_type: Option<TransferMapType> = None;
     for line in input.lines().filter(|l| !l.is_empty()) {
-        if seed_input.len() == 0 {
+        if seed_input.is_empty() {
             seed_input = line
                 .split_once(':')
                 .unwrap()
@@ -216,6 +210,7 @@ pub fn day_05() -> Result<()> {
 
     let lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
     println!("result day 05 part 1: {}", lowest_location);
+    assert_eq!(lowest_location, 261_668_924);
 
     // Part 2
     let mut seeds: Vec<CategoryRange> = Vec::new();
@@ -226,6 +221,7 @@ pub fn day_05() -> Result<()> {
     }
     let lowest_location = transfer_maps.get_min_location_from_seed_ranges(seeds);
     println!("result day 05 part 2: {}", lowest_location);
+    assert_eq!(lowest_location, 24_261_545);
 
     Ok(())
 }

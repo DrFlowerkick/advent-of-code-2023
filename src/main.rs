@@ -7,9 +7,8 @@ fn main() {
         println!("Error occured: {}", err);
 
         // look for source
-        match err.source() {
-            Some(source) => println!("Source of error: {:?}", source),
-            None => (),
+        if let Some(source) = err.source() {
+            println!("Source of error: {:?}", source);
         }
     }
 }

@@ -55,6 +55,8 @@ pub fn day_02() -> Result<()> {
         power += cubes.power();
     }
     println!("result day 02 part 1: {}", result);
+    assert_eq!(result, 2_416);
     println!("result day 02 part 2: {}", power);
+    assert_eq!(power, 63_307);
     Ok(())
 }

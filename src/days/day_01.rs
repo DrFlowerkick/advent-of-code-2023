@@ -11,14 +11,9 @@ pub fn day_01() -> Result<()> {
 fn part_1(input: &str) -> Result<()> {
     let sum: u32 = input
         .lines()
-        .map(|l| match l.chars().filter(|c| c.is_ascii_digit()).next() {
+        .map(|l| match l.chars().find(|c| c.is_ascii_digit()) {
             Some(left) => {
-                let right = l
-                    .chars()
-                    .rev()
-                    .filter(|c| c.is_ascii_digit())
-                    .next()
-                    .unwrap();
+                let right = l.chars().rev().find(|c| c.is_ascii_digit()).unwrap();
                 let mut number = String::new();
                 number.push(left);
                 number.push(right);
@@ -28,6 +23,7 @@ fn part_1(input: &str) -> Result<()> {
         })
         .sum();
     println!("result day 01 part 1: {}", sum);
+    assert_eq!(sum, 56_465);
     Ok(())
 }
 
@@ -77,9 +73,10 @@ pub fn part_2(input: &str) -> Result<()> {
             number.push(right);
             number
                 .parse::<u32>()
-                .expect(&format!("could not parse {}{}", left, right))
+                .unwrap_or_else(|_| panic!("could not parse {}{}", left, right))
         })
         .sum();
     println!("result day 01 part 2: {}", sum);
+    assert_eq!(sum, 55_902);
     Ok(())
 }

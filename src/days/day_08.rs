@@ -53,6 +53,7 @@ pub fn day_08() -> Result<()> {
         }
     }
     println!("result day 08 part 1: {}", steps);
+    assert_eq!(steps, 13_301);
 
     // part 2
     // hint for solution: every path from each starting node to it's corresponding ending node
@@ -90,6 +91,7 @@ pub fn day_08() -> Result<()> {
         lcm_step = lcm(lcm_step, *next_key);
     }
     println!("result day 08 part 2: {}", lcm_step);
+    assert_eq!(lcm_step, 7_309_459_565_207);
 
     Ok(())
 }

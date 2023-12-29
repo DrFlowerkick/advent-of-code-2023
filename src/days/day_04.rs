@@ -27,7 +27,7 @@ pub fn day_04() -> Result<()> {
             .collect();
         let my_winners = winners
             .iter()
-            .filter(|w| my_numbers.iter().find(|m| m == w).is_some())
+            .filter(|w| my_numbers.iter().any(|m| m == *w))
             .count();
         if my_winners > 0 {
             result_part1 += 2_u32.pow((my_winners - 1) as u32);
@@ -41,6 +41,9 @@ pub fn day_04() -> Result<()> {
     }
 
     println!("result day 04 part 1: {}", result_part1);
-    println!("result day 04 part 2: {}", num_per_card.iter().sum::<u32>());
+    assert_eq!(result_part1, 21_485);
+    let result_part2 = num_per_card.iter().sum::<u32>();
+    println!("result day 04 part 2: {}", result_part2);
+    assert_eq!(result_part2, 11_024_379);
     Ok(())
 }

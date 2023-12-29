@@ -31,11 +31,9 @@ pub fn day_03() -> Result<()> {
             if c.is_ascii_digit() {
                 cell.id = id;
                 last_is_digit = true;
-            } else {
-                if last_is_digit {
-                    id += 1;
-                    last_is_digit = false;
-                }
+            } else if last_is_digit {
+                id += 1;
+                last_is_digit = false;
             }
         }
     }
@@ -63,8 +61,7 @@ pub fn day_03() -> Result<()> {
             is_part_number = is_part_number
                 || char_map
                     .iter_neighbors_with_corners(point)
-                    .find(|(_, _, c)| c.val != '.' && !c.val.is_ascii_digit())
-                    .is_some();
+                    .any(|(_, _, c)| c.val != '.' && !c.val.is_ascii_digit());
         } else {
             if is_part_number {
                 result_part1 += digits.parse::<u32>()?;
@@ -105,6 +102,8 @@ pub fn day_03() -> Result<()> {
     }
 
     println!("result day 03 part 1: {}", result_part1);
+    assert_eq!(result_part1, 535_235);
     println!("result day 03 part 2: {}", result_part2);
+    assert_eq!(result_part2, 79_844_424);
     Ok(())
 }

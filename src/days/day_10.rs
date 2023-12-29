@@ -11,26 +11,18 @@ const X: usize = 140;
 // number of lines
 const Y: usize = 140;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Default)]
 enum PipeSegment {
     Pipe,
     LeftSide,
     RightSide,
+    #[default]
     None,
-}
-
-impl Default for PipeSegment {
-    fn default() -> Self {
-        PipeSegment::None
-    }
 }
 
 impl PipeSegment {
     fn is_side_segment(&self) -> bool {
-        match self {
-            PipeSegment::LeftSide | PipeSegment::RightSide => true,
-            _ => false,
-        }
+        matches!(self, PipeSegment::LeftSide | PipeSegment::RightSide)
     }
 }
 
@@ -248,7 +240,7 @@ impl Tile {
             _ => Err(anyhow!("unable to convert to pipe.")),
         }
     }
-    fn to_pipe(&mut self) -> Result<Pipe> {
+    fn change_to_pipe(&mut self) -> Result<Pipe> {
         match self {
             Tile::Unknown(c) => {
                 let pipe = Pipe::from(*c);
@@ -271,14 +263,14 @@ impl Tile {
             _ => None,
         }
     }
-    fn to_left_of_pipe(&mut self) {
+    fn change_to_left_of_pipe(&mut self) {
         // do not switch if pipe
         match self {
             Tile::Pipe(_) => (),
             _ => *self = Tile::LeftOfPipe,
         }
     }
-    fn to_right_of_pipe(&mut self) {
+    fn change_to_right_of_pipe(&mut self) {
         // do not switch if pipe
         match self {
             Tile::Pipe(_) => (),
@@ -357,11 +349,11 @@ impl<const X: usize, const Y: usize> TileMap<X, Y> {
         current_tile: MapPoint<X, Y>,
         flow_direction: Compass,
     ) -> Result<Compass> {
-        // unwrap at the is ok, since we know, that without an error in to_pipe(), get_gates will return pipe gates
+        // unwrap at the is ok, since we know, that without an error in change_to_pipe(), get_gates will return pipe gates
         let (gate_1, gate_2) = self
             .map
             .get_mut(current_tile)
-            .to_pipe()?
+            .change_to_pipe()?
             .get_gates()
             .unwrap();
         //increment pipe Counter
@@ -436,8 +428,8 @@ impl<const X: usize, const Y: usize> TileMap<X, Y> {
             // at sidelines of map neighbor could be None
             if let Some(neighbor) = current_tile.neighbor(orientation) {
                 match segment {
-                    PipeSegment::LeftSide => self.map.get_mut(neighbor).to_left_of_pipe(),
-                    PipeSegment::RightSide => self.map.get_mut(neighbor).to_right_of_pipe(),
+                    PipeSegment::LeftSide => self.map.get_mut(neighbor).change_to_left_of_pipe(),
+                    PipeSegment::RightSide => self.map.get_mut(neighbor).change_to_right_of_pipe(),
                     _ => {
                         return Err(anyhow!(
                             "internal error, cannot happen because of filter in iter"
@@ -460,8 +452,7 @@ impl<const X: usize, const Y: usize> TileMap<X, Y> {
                             && self
                                 .map
                                 .iter_neighbors(*p)
-                                .find(|(.., nt)| nt.get_unknown_tile_char().is_some())
-                                .is_some()
+                                .any(|(.., nt)| nt.get_unknown_tile_char().is_some())
                     })
                     .map(|(p, _)| p)
                 {
@@ -479,7 +470,7 @@ impl<const X: usize, const Y: usize> TileMap<X, Y> {
                         .iter_neighbors(check_tile)
                         .filter(|(np, _, nt)| {
                             nt.get_unknown_tile_char().is_some()
-                                && tiles_to_extend_to.iter().find(|p| *p == np).is_none()
+                                && !tiles_to_extend_to.iter().any(|p| p == np)
                         })
                         .map(|(p, ..)| p)
                         .collect();
@@ -540,6 +531,7 @@ pub fn day_10() -> Result<()> {
         "result day 10 part 1: {}",
         farthest_distance_from_start_tile_trough_pipe
     );
+    assert_eq!(farthest_distance_from_start_tile_trough_pipe, 6_697);
 
     // part 2: identify left and right side tiles of pipe and check, which one is outside
     // count outside tiles as result
@@ -559,6 +551,7 @@ pub fn day_10() -> Result<()> {
     // identify outside and count inside
     let number_of_inside_tiles = tile_map.identify_outside_count_inside()?;
     println!("result day 10 part 2: {}", number_of_inside_tiles);
+    assert_eq!(number_of_inside_tiles, 423);
 
     Ok(())
 }

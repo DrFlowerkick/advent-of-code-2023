@@ -56,6 +56,7 @@ pub fn day_06() -> Result<()> {
         result_part1 *= time_2 - time_1 + 1;
     }
     println!("result day 06 part 1: {}", result_part1);
+    assert_eq!(result_part1, 345_015);
 
     // part 2
     let mut input_iter = input.lines();
@@ -85,6 +86,7 @@ pub fn day_06() -> Result<()> {
     let (time_1, time_2) = race.calc_times();
     let result_part2 = time_2 - time_1 + 1;
     println!("result day 06 part 2: {}", result_part2);
+    assert_eq!(result_part2, 42_588_603);
 
     Ok(())
 }

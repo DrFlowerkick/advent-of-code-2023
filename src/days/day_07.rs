@@ -14,8 +14,9 @@ trait PlayingCard {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Default)]
 enum NoJokers {
+    #[default]
     Two,
     Three,
     Four,
@@ -51,12 +52,6 @@ impl PlayingCard for NoJokers {
     }
 }
 
-impl Default for NoJokers {
-    fn default() -> Self {
-        NoJokers::Two
-    }
-}
-
 impl From<char> for NoJokers {
     fn from(value: char) -> Self {
         match value {
@@ -78,9 +73,10 @@ impl From<char> for NoJokers {
     }
 }
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Default)]
 enum HasJokers {
     Joker,
+    #[default]
     Two,
     Three,
     Four,
@@ -118,12 +114,6 @@ impl PlayingCard for HasJokers {
     }
 }
 
-impl Default for HasJokers {
-    fn default() -> Self {
-        HasJokers::Two
-    }
-}
-
 impl From<char> for HasJokers {
     fn from(value: char) -> Self {
         match value {
@@ -147,8 +137,9 @@ impl From<char> for HasJokers {
 
 // hand deginitions
 
-#[derive(PartialEq, Eq, PartialOrd, Ord)]
+#[derive(PartialEq, Eq, PartialOrd, Ord, Default)]
 enum HandType {
+    #[default]
     HighCard,
     OnePair,
     TwoPair,
@@ -156,12 +147,6 @@ enum HandType {
     FullHouse,
     FourOfAKind,
     FiveOfAKind,
-}
-
-impl Default for HandType {
-    fn default() -> Self {
-        HandType::HighCard
-    }
 }
 
 impl HandType {
@@ -208,7 +193,7 @@ impl HandType {
             None => HandType::no_jokers_in_hand(&card_count),
         }
     }
-    fn no_jokers_in_hand(card_count: &Vec<u8>) -> Self {
+    fn no_jokers_in_hand(card_count: &[u8]) -> Self {
         if card_count.contains(&5) {
             HandType::FiveOfAKind
         } else if card_count.contains(&4) {
@@ -251,7 +236,7 @@ impl<C: PlayingCard + PartialEq + Eq + PartialOrd + Ord + Default + From<char>> 
             Ordering::Less => Ordering::Less,
             Ordering::Equal => {
                 for (s, o) in self.hand.iter().zip(other.hand.iter()) {
-                    match s.cmp(&o) {
+                    match s.cmp(o) {
                         Ordering::Greater => return Ordering::Greater,
                         Ordering::Less => return Ordering::Less,
                         Ordering::Equal => (),
@@ -308,6 +293,7 @@ pub fn day_07() -> Result<()> {
         result_part1 += rank * bid;
     }
     println!("result day 07 part 1: {}", result_part1);
+    assert_eq!(result_part1, 251_927_063);
 
     // part 2
     let mut card_hands: Vec<CardHand<HasJokers>> = input
@@ -328,6 +314,7 @@ pub fn day_07() -> Result<()> {
         result_part2 += rank * bid;
     }
     println!("result day 07 part 2: {}", result_part2);
+    assert_eq!(result_part2, 255_632_664);
 
     Ok(())
 }

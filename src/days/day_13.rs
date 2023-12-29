@@ -7,17 +7,12 @@ use my_lib::my_map_two_dim::MyMap2D;
 const X: usize = 17;
 const Y: usize = 17;
 
-#[derive(PartialEq, Eq, Clone, Copy)]
+#[derive(PartialEq, Eq, Clone, Copy, Default)]
 enum Cell {
+    #[default]
     None,
     Ash,
     Rock,
-}
-
-impl Default for Cell {
-    fn default() -> Self {
-        Cell::None
-    }
 }
 
 impl From<char> for Cell {
@@ -206,7 +201,9 @@ pub fn day_13() -> Result<()> {
     }
 
     println!("result day 13 part 1: {}", result_part1);
+    assert_eq!(result_part1, 33_735);
     println!("result day 13 part 2: {}", result_part2);
+    assert_eq!(result_part2, 38_063);
 
     Ok(())
 }

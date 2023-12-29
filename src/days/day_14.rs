@@ -1,24 +1,22 @@
 //!day_14.rs
 
-use std::{fmt::{Debug, Display}, collections::HashMap};
 use anyhow::{anyhow, Result};
 use my_lib::{my_compass::Compass, my_map_two_dim::MyMap2D};
+use std::{
+    collections::HashMap,
+    fmt::{Debug, Display},
+};
 
 // values for X and Y taken from ../../assets/day_14.txt
 const X: usize = 100;
 const Y: usize = 100;
 
-#[derive(PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Default)]
 enum Cell {
+    #[default]
     None,
     Cube,
     Round,
-}
-
-impl Default for Cell {
-    fn default() -> Self {
-        Cell::None
-    }
 }
 
 impl Debug for Cell {
@@ -50,59 +48,49 @@ impl Display for Cell {
 
 fn rotate_round_cells_left_until_cube_in_slice(slice: &mut [Cell]) {
     let mut start = 0;
-    loop {
-        match slice.iter().skip(start).position(|c| *c != Cell::Cube) {
-            Some(new_start) => {
-                start = start + new_start;
-                let end = match slice.iter().skip(start).position(|c| *c == Cell::Cube) {
-                    Some(new_end) => start + new_end,
-                    None => slice.len(),
-                };
-                let mut index = 0;
-                let num_rounds = slice[start..end]
-                    .iter()
-                    .filter(|c| **c == Cell::Round)
-                    .count();
-                while index < num_rounds {
-                    if slice[start + index..end][0] == Cell::None {
-                        slice[start + index..end].rotate_left(1);
-                    } else {
-                        index += 1;
-                    }
-                }
-                start = end;
+    while let Some(new_start) = slice.iter().skip(start).position(|c| *c != Cell::Cube) {
+        start += new_start;
+        let end = match slice.iter().skip(start).position(|c| *c == Cell::Cube) {
+            Some(new_end) => start + new_end,
+            None => slice.len(),
+        };
+        let mut index = 0;
+        let num_rounds = slice[start..end]
+            .iter()
+            .filter(|c| **c == Cell::Round)
+            .count();
+        while index < num_rounds {
+            if slice[start + index..end][0] == Cell::None {
+                slice[start + index..end].rotate_left(1);
+            } else {
+                index += 1;
             }
-            None => break,
         }
+        start = end;
     }
 }
 
 fn rotate_round_cells_right_until_cube_in_slice(slice: &mut [Cell]) {
     let mut start = 0;
-    loop {
-        match slice.iter().skip(start).position(|c| *c != Cell::Cube) {
-            Some(new_start) => {
-                start = start + new_start;
-                let end = match slice.iter().skip(start).position(|c| *c == Cell::Cube) {
-                    Some(new_end) => start + new_end,
-                    None => slice.len(),
-                };
-                let mut index = 0;
-                let num_rounds = slice[start..end]
-                    .iter()
-                    .filter(|c| **c == Cell::Round)
-                    .count();
-                while index < num_rounds {
-                    if slice[start..end - index][end - start - 1 - index] == Cell::None {
-                        slice[start..end - index].rotate_right(1);
-                    } else {
-                        index += 1;
-                    }
-                }
-                start = end;
+    while let Some(new_start) = slice.iter().skip(start).position(|c| *c != Cell::Cube) {
+        start += new_start;
+        let end = match slice.iter().skip(start).position(|c| *c == Cell::Cube) {
+            Some(new_end) => start + new_end,
+            None => slice.len(),
+        };
+        let mut index = 0;
+        let num_rounds = slice[start..end]
+            .iter()
+            .filter(|c| **c == Cell::Round)
+            .count();
+        while index < num_rounds {
+            if slice[start..end - index][end - start - 1 - index] == Cell::None {
+                slice[start..end - index].rotate_right(1);
+            } else {
+                index += 1;
             }
-            None => break,
         }
+        start = end;
     }
 }
 
@@ -115,10 +103,9 @@ struct Parabolic<const X: usize, const Y: usize> {
 
 impl<const X: usize, const Y: usize> Parabolic<X, Y> {
     fn new(value: &str) -> Self {
-        let parabolic = Parabolic {
+        Parabolic {
             platform: value.into(),
-        };
-        parabolic
+        }
     }
     fn tilt_one_cycle(&mut self) -> Result<()> {
         self.tilt_direction(Compass::N)?;
@@ -126,7 +113,11 @@ impl<const X: usize, const Y: usize> Parabolic<X, Y> {
         self.tilt_direction(Compass::S)?;
         self.tilt_direction(Compass::E)
     }
-    fn tilt_num_cycles(&mut self, cycles: usize, cache: &mut HashMap<Parabolic<X, Y>, Parabolic<X,Y>>) -> Result<()> {
+    fn tilt_num_cycles(
+        &mut self,
+        cycles: usize,
+        cache: &mut HashMap<Parabolic<X, Y>, Parabolic<X, Y>>,
+    ) -> Result<()> {
         let mut found_cache_first_time: Option<Self> = None;
         let mut counter_first_time = 0;
         let mut found_pattern_cycle = false;
@@ -144,13 +135,13 @@ impl<const X: usize, const Y: usize> Parabolic<X, Y> {
                             } else if found_pattern_cycle && counter == return_counter {
                                 return Ok(());
                             }
-                        },
+                        }
                         None => {
                             found_cache_first_time = Some(*para_plat);
                             counter_first_time = counter;
                         }
                     }
-                },
+                }
                 None => {
                     let pre_tilt = *self;
                     self.tilt_one_cycle()?;
@@ -192,7 +183,7 @@ impl<const X: usize, const Y: usize> Parabolic<X, Y> {
                 }
                 Ok(())
             }
-            _ => return Err(anyhow!("direction not available")),
+            _ => Err(anyhow!("direction not available")),
         }
     }
     fn calc_total_load_north(&self) -> usize {
@@ -209,28 +200,21 @@ impl<const X: usize, const Y: usize> Parabolic<X, Y> {
     }
 }
 
-// 1. idea to implement:
-// Cache left and right rotation pre and post slice
-// if pre is in cache, return cached value
-// 2. idea to implement:
-// it could be, that there are patterns cycling through the tilt cycles
-// therefore cache plattform pre and post cycle
-// if pre cycle is in cache, return cash as result of cycle
-
-
 pub fn day_14() -> Result<()> {
     let input = include_str!("../../assets/day_14.txt");
     let mut parabolic_platform: Parabolic<X, Y> = Parabolic::new(input);
     parabolic_platform.tilt_direction(Compass::N)?;
     let result_part1 = parabolic_platform.calc_total_load_north();
     println!("result day 14 part 1: {}", result_part1);
+    assert_eq!(result_part1, 108_144);
 
     // part 2: reset platform
-    let mut cache: HashMap<Parabolic<X, Y>, Parabolic<X,Y>> = HashMap::new();
+    let mut cache: HashMap<Parabolic<X, Y>, Parabolic<X, Y>> = HashMap::new();
     parabolic_platform = Parabolic::new(input);
     parabolic_platform.tilt_num_cycles(1_000_000_000, &mut cache)?;
     let result_part2 = parabolic_platform.calc_total_load_north();
     println!("result day 14 part 2: {}", result_part2);
+    assert_eq!(result_part2, 108_404);
 
     Ok(())
 }
@@ -346,9 +330,11 @@ mod tests {
         eprintln!("three cycle\n{}", parabolic_platform.platform);
         assert_eq!(three_cycles, parabolic_platform);
         // test full cycling
-        let mut cache: HashMap<Parabolic<XT, YT>, Parabolic<XT,YT>> = HashMap::new();
+        let mut cache: HashMap<Parabolic<XT, YT>, Parabolic<XT, YT>> = HashMap::new();
         parabolic_platform = Parabolic::new(input);
-        parabolic_platform.tilt_num_cycles(1_000_000_000, &mut cache).unwrap();
+        parabolic_platform
+            .tilt_num_cycles(1_000_000_000, &mut cache)
+            .unwrap();
         assert_eq!(parabolic_platform.calc_total_load_north(), 64);
     }
 }

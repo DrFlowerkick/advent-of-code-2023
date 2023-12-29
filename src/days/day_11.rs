@@ -63,7 +63,7 @@ impl<const X: usize, const Y: usize> Display for Cosmos<X, Y> {
                     write!(f, ".")?;
                 }
             }
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         Ok(())
     }
@@ -140,8 +140,10 @@ pub fn day_11() -> Result<()> {
     let cosmos = Cosmos::<X, Y>::new(input);
     let sum_distance = cosmos.calc_sum_galaxy_distances(2);
     println!("result day 11 part 1: {}", sum_distance);
+    assert_eq!(sum_distance, 9_799_681);
     let sum_distance = cosmos.calc_sum_galaxy_distances(1_000_000);
     println!("result day 11 part 2: {}", sum_distance);
+    assert_eq!(sum_distance, 513_171_773_355);
 
     Ok(())
 }
