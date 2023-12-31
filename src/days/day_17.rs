@@ -1,6 +1,5 @@
 //!day_17.rs
 
-
 use anyhow::Result;
 use my_lib::my_compass::Compass;
 use my_lib::my_map_point::MapPoint;
@@ -27,7 +26,6 @@ trait PathNode<const X: usize, const Y: usize>: Default + PartialEq + Eq + Copy 
     fn step_right(&self) -> Option<Self>;
     fn get_city_block(&self) -> MapPoint<X, Y>;
 }
-
 
 #[derive(Default, PartialEq, Eq, Copy, Clone)]
 struct NormalCrucible<const X: usize, const Y: usize> {
@@ -226,7 +224,6 @@ impl<N: PathNode<X, Y>, const X: usize, const Y: usize> HeatPathNode<N, X, Y> {
         None
     }
 }
-
 
 #[cfg(feature = "long-run-time")]
 struct CityMap<N: PathNode<X, Y>, const X: usize, const Y: usize> {
