@@ -46,19 +46,19 @@ impl LavaLagoon {
                 Some(rgb) => {
                     let ns_taks2 = &rgb[2..7];
                     let dir_task2 = match &rgb[7..8] {
-                        "0" => (1, 0), // R
+                        "0" => (1, 0),  // R
                         "2" => (-1, 0), // L
                         "3" => (0, -1), // U
-                        "1" => (0, 1), // D
+                        "1" => (0, 1),  // D
                         _ => return Err(anyhow!("bad direction task 2 input")),
                     };
                     (i64::from_str_radix(ns_taks2, 16)?, dir_task2)
-                },
+                }
                 None => return Err(anyhow!("missing rgb input")),
             };
             cp_task2 = (
                 cp_task2.0 + ns_taks2 * dir_task2.0,
-                cp_task2.1 + ns_taks2* dir_task2.1,
+                cp_task2.1 + ns_taks2 * dir_task2.1,
             );
             // boundary points is sum of steps
             lava_lagoon.boundary_points_task2 += ns_taks2;
@@ -75,14 +75,18 @@ impl LavaLagoon {
             (&self.points_task_1, self.boundary_points_task1)
         };
         // https://de.wikipedia.org/wiki/Gau%C3%9Fsche_Trapezformel
-        let gauss_area = (points.iter().enumerate().map(|(index, (_, y))| y * (points[self.decrement_index(index)].0 - points[self.increment_index(index)].0)).sum::<i64>() / 2).abs();
+        let gauss_area = (points
+            .iter()
+            .enumerate()
+            .map(|(index, (_, y))| {
+                y * (points[self.decrement_index(index)].0 - points[self.increment_index(index)].0)
+            })
+            .sum::<i64>()
+            / 2)
+        .abs();
         // https://de.wikipedia.org/wiki/Satz_von_Pick
         let interiour_cubes = gauss_area - boundary_points / 2 + 1;
-        if task2 {
-            interiour_cubes + boundary_points
-        } else {
-            interiour_cubes + boundary_points
-        }
+        interiour_cubes + boundary_points
     }
     fn increment_index(&self, index: usize) -> usize {
         if index == self.points_task_1.len() - 1 {

@@ -309,7 +309,7 @@ pub fn day_17() -> Result<()> {
     Ok(())
 }
 
-#[cfg(test)]
+#[cfg(all(test, feature = "long-run-time"))]
 mod tests {
 
     use super::*;
