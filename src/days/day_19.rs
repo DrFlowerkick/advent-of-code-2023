@@ -72,7 +72,12 @@ impl Rule {
             let (comparator_value, target_rule) = &rule_str[2..].split_once(':').unwrap();
             let comparator_value = comparator_value.parse::<u64>()?;
             let target_rule = target_rule.to_string();
-            Ok(Self { rt, mpc, comparator_value, target_rule, })
+            Ok(Self {
+                rt,
+                mpc,
+                comparator_value,
+                target_rule,
+            })
         } else {
             match rule_str {
                 "A" => Ok(Rule::new_accepted()),
@@ -91,48 +96,74 @@ impl Rule {
         match self.rt {
             RuleType::Accepted => RuleResult::Value(machine_part.sum()),
             RuleType::Rejected => RuleResult::Value(0),
-            RuleType::Link  => RuleResult::Link(self.target_rule.clone()),
-            RuleType::Greater => if comparator > self.comparator_value {
-                RuleResult::Link(self.target_rule.clone())
-            } else {
-                RuleResult::Next
-            },
-            RuleType::Less => if comparator < self.comparator_value {
-                RuleResult::Link(self.target_rule.clone())
-            } else {
-                RuleResult::Next
-            },
+            RuleType::Link => RuleResult::Link(self.target_rule.clone()),
+            RuleType::Greater => {
+                if comparator > self.comparator_value {
+                    RuleResult::Link(self.target_rule.clone())
+                } else {
+                    RuleResult::Next
+                }
+            }
+            RuleType::Less => {
+                if comparator < self.comparator_value {
+                    RuleResult::Link(self.target_rule.clone())
+                } else {
+                    RuleResult::Next
+                }
+            }
         }
     }
     fn check_range(&self, machine_part_range: &MachinePartRange) -> RuleRangeResult {
         let (min_comparator, max_comparator) = match self.mpc {
-            RuleMachinePartCartegory::ExtremlyCoolLooking => (machine_part_range.min.x, machine_part_range.max.x),
-            RuleMachinePartCartegory::Musical => (machine_part_range.min.m, machine_part_range.max.m),
-            RuleMachinePartCartegory::Aerodynamic => (machine_part_range.min.a, machine_part_range.max.a),
+            RuleMachinePartCartegory::ExtremlyCoolLooking => {
+                (machine_part_range.min.x, machine_part_range.max.x)
+            }
+            RuleMachinePartCartegory::Musical => {
+                (machine_part_range.min.m, machine_part_range.max.m)
+            }
+            RuleMachinePartCartegory::Aerodynamic => {
+                (machine_part_range.min.a, machine_part_range.max.a)
+            }
             RuleMachinePartCartegory::Shiny => (machine_part_range.min.s, machine_part_range.max.s),
         };
         match self.rt {
             RuleType::Accepted => RuleRangeResult::Value(machine_part_range.combinations()),
             RuleType::Rejected => RuleRangeResult::Value(0),
-            RuleType::Link  => RuleRangeResult::Link(self.target_rule.clone()),
-            RuleType::Greater => if min_comparator > self.comparator_value {
-                RuleRangeResult::Link(self.target_rule.clone())
-            } else if max_comparator <= self.comparator_value {
-                RuleRangeResult::Next
-            } else {
-                // split machine_part_range
-                let (accepted_machine_part_range, rejected_machine_part_range) = machine_part_range.split_at_greater_comparator_value(&self.mpc, self.comparator_value);
-                RuleRangeResult::Split(accepted_machine_part_range, self.target_rule.clone(), rejected_machine_part_range)
-            },
-            RuleType::Less => if max_comparator < self.comparator_value {
-                RuleRangeResult::Link(self.target_rule.clone())
-            } else if min_comparator >= self.comparator_value {
-                RuleRangeResult::Next
-            } else {
-                // split machine_part_range
-                let (accepted_machine_part_range, rejected_machine_part_range) = machine_part_range.split_at_less_comparator_value(&self.mpc, self.comparator_value);
-                RuleRangeResult::Split(accepted_machine_part_range, self.target_rule.clone(), rejected_machine_part_range)
-            },
+            RuleType::Link => RuleRangeResult::Link(self.target_rule.clone()),
+            RuleType::Greater => {
+                if min_comparator > self.comparator_value {
+                    RuleRangeResult::Link(self.target_rule.clone())
+                } else if max_comparator <= self.comparator_value {
+                    RuleRangeResult::Next
+                } else {
+                    // split machine_part_range
+                    let (accepted_machine_part_range, rejected_machine_part_range) =
+                        machine_part_range
+                            .split_at_greater_comparator_value(&self.mpc, self.comparator_value);
+                    RuleRangeResult::Split(
+                        accepted_machine_part_range,
+                        self.target_rule.clone(),
+                        rejected_machine_part_range,
+                    )
+                }
+            }
+            RuleType::Less => {
+                if max_comparator < self.comparator_value {
+                    RuleRangeResult::Link(self.target_rule.clone())
+                } else if min_comparator >= self.comparator_value {
+                    RuleRangeResult::Next
+                } else {
+                    // split machine_part_range
+                    let (accepted_machine_part_range, rejected_machine_part_range) =
+                        machine_part_range
+                            .split_at_less_comparator_value(&self.mpc, self.comparator_value);
+                    RuleRangeResult::Split(
+                        accepted_machine_part_range,
+                        self.target_rule.clone(),
+                        rejected_machine_part_range,
+                    )
+                }
+            }
         }
     }
 }
@@ -257,58 +288,69 @@ impl MachinePartRange {
                 m: 4000,
                 a: 4000,
                 s: 4000,
-            }
+            },
         }
     }
     fn combinations(&self) -> u64 {
-        (self.max.x - self.min.x + 1) * (self.max.m - self.min.m + 1) * (self.max.a - self.min.a + 1) * (self.max.s - self.min.s + 1)
+        (self.max.x - self.min.x + 1)
+            * (self.max.m - self.min.m + 1)
+            * (self.max.a - self.min.a + 1)
+            * (self.max.s - self.min.s + 1)
     }
     fn calc_machine_part_combinations(&mut self, rule_set: &RuleSet) -> Result<u64> {
         self.calc_machine_part_combinations_recursive(String::from("in"), rule_set)
     }
-    fn split_at_greater_comparator_value(&self, mpc: &RuleMachinePartCartegory, comparator_value: u64,) -> (Self, Self) {
+    fn split_at_greater_comparator_value(
+        &self,
+        mpc: &RuleMachinePartCartegory,
+        comparator_value: u64,
+    ) -> (Self, Self) {
         let mut accepted_range = *self;
         let mut rejected_range = *self;
         match mpc {
             RuleMachinePartCartegory::ExtremlyCoolLooking => {
                 accepted_range.min.x = comparator_value + 1;
                 rejected_range.max.x = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Musical => {
                 accepted_range.min.m = comparator_value + 1;
                 rejected_range.max.m = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Aerodynamic => {
                 accepted_range.min.a = comparator_value + 1;
                 rejected_range.max.a = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Shiny => {
                 accepted_range.min.s = comparator_value + 1;
                 rejected_range.max.s = comparator_value;
-            },
+            }
         }
         (accepted_range, rejected_range)
     }
-    fn split_at_less_comparator_value(&self, mpc: &RuleMachinePartCartegory, comparator_value: u64,) -> (Self, Self) {
+    fn split_at_less_comparator_value(
+        &self,
+        mpc: &RuleMachinePartCartegory,
+        comparator_value: u64,
+    ) -> (Self, Self) {
         let mut accepted_range = *self;
         let mut rejected_range = *self;
         match mpc {
             RuleMachinePartCartegory::ExtremlyCoolLooking => {
                 accepted_range.max.x = comparator_value - 1;
                 rejected_range.min.x = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Musical => {
                 accepted_range.max.m = comparator_value - 1;
                 rejected_range.min.m = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Aerodynamic => {
                 accepted_range.max.a = comparator_value - 1;
                 rejected_range.min.a = comparator_value;
-            },
+            }
             RuleMachinePartCartegory::Shiny => {
                 accepted_range.max.s = comparator_value - 1;
                 rejected_range.min.s = comparator_value;
-            },
+            }
         }
         (accepted_range, rejected_range)
     }
@@ -323,10 +365,14 @@ impl MachinePartRange {
                 for rule in rules.iter() {
                     match rule.check_range(&self) {
                         RuleRangeResult::Split(accecpted_range, new_rule_key, rejected_range) => {
-                            combinations += accecpted_range.calc_machine_part_combinations_recursive(new_rule_key, rule_set)?;
+                            combinations += accecpted_range
+                                .calc_machine_part_combinations_recursive(new_rule_key, rule_set)?;
                             self = rejected_range;
-                        },
-                        RuleRangeResult::Link(new_rule_key) => combinations += self.calc_machine_part_combinations_recursive(new_rule_key, rule_set)?,
+                        }
+                        RuleRangeResult::Link(new_rule_key) => {
+                            combinations += self
+                                .calc_machine_part_combinations_recursive(new_rule_key, rule_set)?
+                        }
                         RuleRangeResult::Next => (),
                         RuleRangeResult::Value(value) => return Ok(combinations + value),
                     }
