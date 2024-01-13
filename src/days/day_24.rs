@@ -122,7 +122,7 @@ impl HailStone {
     }
 }
 
-fn solve_task_2(hailstones: &Vec<HailStone>) -> Result<()> {
+fn solve_task_2(hailstones: &[HailStone]) -> Result<u64> {
     // part 2: a rock thrown from postion (xs, ys, zs) with velocity (vxs, vys, vzs) has to hit
     // all hailstones. This is obviously over-determined. The question is, how many hailstones do you need to solve it?
     // The rock has 6 unknown variables. To solve this this, we try with one hailstone.
@@ -140,6 +140,11 @@ fn solve_task_2(hailstones: &Vec<HailStone>) -> Result<()> {
     // (y2 - ys) / (vys - vy2) = (z2 - zs) / (vzs - vz2)
     // (x3 - xs) / (vxs - vx3) = (y3 - ys) / (vys - vy3)
     // (y3 - ys) / (vys - vy3) = (z3 - zs) / (vzs - vz3)
+    // an alternativ equation, using x-z combination, is
+    // (x1 - xs) / (vxs - vx1) = (z1 - zs) / (vzs - vz1)
+    // (x1 - xs) * (vzs - vz1) - (z1 - zs) * (vxs - vx1) = 0
+    // with Jacobi row
+    // vz1 - vzs, 0, vxs - vx1, zs - z1, 0, x1 - xs
     // Therefore we need 3 hailstones. You can ignore all other hailstones. Because if you have a solution for this three hailstones, this solution
     // must fit either all other hailstones or there is not a solution at all.
     // To feed these equations in a equation solver, you must transform them to have "= 0" on one side
@@ -159,23 +164,40 @@ fn solve_task_2(hailstones: &Vec<HailStone>) -> Result<()> {
     // 0        , vz2 - vzs, vys - vy2, 0      , zs - z2, y2 - ys
     // vy3 - vys, vxs - vx3, 0        , ys - y3, x3 - xs, 0
     // 0        , vz3 - vzs, vys - vy3, 0      , zs - z3, y3 - ys
+
+    // altenativ approach to make it work with LU inversion of jacobi matrix
+    // (x1 - xs) * (vys - vy1) - (y1 - ys) * (vxs - vx1) = 0
+    // (x2 - xs) * (vys - vy2) - (y2 - ys) * (vxs - vx2) = 0
+    // (x3 - xs) * (vzs - vz3) - (z3 - zs) * (vxs - vx3) = 0
+    // (x1 - xs) * (vzs - vz1) - (z1 - zs) * (vxs - vx1) = 0
+    // (y2 - ys) * (vzs - vz2) - (z2 - zs) * (vys - vy2) = 0
+    // (y3 - ys) * (vzs - vz3) - (z3 - zs) * (vys - vy3) = 0
+
+    // vy1 - vys, vxs - vx1, 0        , ys - y1, x1 - xs, 0
+    // vy2 - vys, vxs - vx2, 0        , ys - y2, x2 - xs, 0
+    // vz3 - vzs, 0        , vxs - vx3, zs - z3, 0      , x3 - xs
+    // vz1 - vzs, 0        , vxs - vx1, zs - z1, 0      , x1 - xs
+    // 0        , vz2 - vzs, vys - vy2, 0      , zs - z2, y2 - ys
+    // 0        , vz3 - vzs, vys - vy3, 0      , zs - z3, y3 - ys
+
+    // I'm not sure why it worked with these hailstone (before I tried with 0, 1, 2), but now I have the correct result :)
     let (x1, y1, z1, vx1, vy1, vz1) = hailstones[0].as_tuple();
-    let (x2, y2, z2, vx2, vy2, vz2) = hailstones[0].as_tuple();
-    let (x3, y3, z3, vx3, vy3, vz3) = hailstones[0].as_tuple();
+    let (x2, y2, z2, vx2, vy2, vz2) = hailstones[3].as_tuple();
+    let (x3, y3, z3, vx3, vy3, vz3) = hailstones[6].as_tuple();
 
     // Vector6: 0: xs, 1: ys, 2: zs, 3: vxs, 4: vys, 5: vzs
     let functions = |v: Vector6<f64>| {
         Vector6::new(
             // (x1 - xs) * (vys - vy1) - (y1 - ys) * (vxs - vx1) = 0
             (x1 - v[0]) * (v[4] - vy1) - (y1 - v[1]) * (v[3] - vx1),
-            // (y1 - ys) * (vzs - vz1) - (z1 - zs) * (vys - vy1) = 0
-            (y1 - v[1]) * (v[5] - vz1) - (z1 - v[2]) * (v[4] - vy1),
             // (x2 - xs) * (vys - vy2) - (y2 - ys) * (vxs - vx2) = 0
             (x2 - v[0]) * (v[4] - vy2) - (y2 - v[1]) * (v[3] - vx2),
+            // (x3 - xs) * (vzs - vz3) - (z3 - zs) * (vxs - vx3) = 0
+            (x3 - v[0]) * (v[5] - vz3) - (z3 - v[2]) * (v[3] - vx3),
+            // (x1 - xs) * (vzs - vz1) - (z1 - zs) * (vxs - vx1) = 0
+            (x1 - v[0]) * (v[5] - vz1) - (z1 - v[2]) * (v[3] - vx1),
             // (y2 - ys) * (vzs - vz2) - (z2 - zs) * (vys - vy2) = 0
             (y2 - v[1]) * (v[5] - vz2) - (z2 - v[2]) * (v[4] - vy2),
-            // (x3 - xs) * (vys - vy3) - (y3 - ys) * (vxs - vx3) = 0
-            (x3 - v[0]) * (v[4] - vy3) - (y3 - v[1]) * (v[3] - vx3),
             // (y3 - ys) * (vzs - vz3) - (z3 - zs) * (vys - vy3) = 0
             (y3 - v[1]) * (v[5] - vz3) - (z3 - v[2]) * (v[4] - vy3),
         )
@@ -184,18 +206,48 @@ fn solve_task_2(hailstones: &Vec<HailStone>) -> Result<()> {
     // Jacobian of F
     let jacobi = |v: Vector6<f64>| {
         Matrix6::new(
-            // vy1 - vys, vxs - vx1 , 0         , ys - y1  , x1 - xs  , 0
-            vy1 - v[4]  , v[3] - vx1, 0.        , v[1] - y1, x1 - v[0], 0.,
-            // 0        , vz1 - vzs , vys - vy1 , 0        , zs - z1  , y1 - ys
-            0.          , vz1 - v[5], v[4] - vy1, 0.       , v[2] - z1, y1 - v[1],
-            // vy2 - vys, vxs - vx2 , 0         , ys - y2  , x2 - xs  , 0
-            vy2 - v[4]  , v[3] - vx2, 0.        , v[1] - y2, x2 - v[0], 0.,
+            //  vy1 - vys  ,     vxs  - vx1,     0         , ys - y1  , x1 - xs  , 0
+            vy1 - v[4],
+            v[3] - vx1,
+            0.,
+            v[1] - y1,
+            x1 - v[0],
+            0.,
+            //  vy2 - vys ,      vxs - vx2 , 0         , ys - y2  , x2 - xs  , 0
+            vy2 - v[4],
+            v[3] - vx2,
+            0.,
+            v[1] - y2,
+            x2 - v[0],
+            0.,
+            // vz3 - vzs, 0        , vxs - vx3, zs - z3, 0      , x3 - xs
+            vz3 - v[5],
+            0.,
+            v[3] - vx3,
+            v[2] - z3,
+            0.,
+            x3 - v[0],
+            // vz1 - vzs, 0        , vxs - vx1, zs - z1, 0      , x1 - xs
+            vz1 - v[5],
+            0.,
+            v[3] - vx1,
+            v[2] - z1,
+            0.,
+            x1 - v[0],
             // 0        , vz2 - vzs , vys - vy2 , 0        , zs - z2  , y2 - ys
-            0.          , vz2 - v[5], v[4] - vy2, 0.       , v[2] - z2, y2 - v[1],
-            // vy3 - vys, vxs - vx3 , 0         , ys - y3  , x3 - xs  , 0
-            vy3 - v[4]  , v[3] - vx3, 0.        , v[1] - y3, x3 - v[0], 0.,
+            0.,
+            vz2 - v[5],
+            v[4] - vy2,
+            0.,
+            v[2] - z2,
+            y2 - v[1],
             // 0        , vz3 - vzs , vys - vy3 , 0        , zs - z3  , y3 - ys
-            0.          , vz3 - v[5], v[4] - vy3, 0.       , v[2] - z3, y3 - v[1],
+            0.,
+            vz3 - v[5],
+            v[4] - vy3,
+            0.,
+            v[2] - z3,
+            y3 - v[1],
         )
     };
 
@@ -205,18 +257,22 @@ fn solve_task_2(hailstones: &Vec<HailStone>) -> Result<()> {
     let vx_start = (vx1 + vx2 + vx3) / 3.;
     let vy_start = (vy1 + vy2 + vy3) / 3.;
     let vz_start = (vz1 + vz2 + vz3) / 3.;
-    let solution: Vector6<f64> =
-        match MultiVarNewton::new(functions, jacobi)
-            .with_tol(1e-0)
-            .solve(Vector6::new(
-                x_start, y_start, z_start, vx_start, vy_start, vz_start,
-            )) {
-            Ok(sol) => sol,
-            Err(err) => return Err(anyhow!("{:?}", err)),
-        };
 
-    println!("{:?}", solution);
-    Ok(())
+    let x0 = Vector6::new(x_start, y_start, z_start, vx_start, vy_start, vz_start);
+
+    let solution: Vector6<f64> = match MultiVarNewton::new(functions, jacobi)
+        .with_tol(1e-6)
+        .with_itermax(500000)
+        .solve(x0)
+    {
+        Ok(sol) => sol,
+        Err(err) => return Err(anyhow!("err solution: {:?}", err)),
+    };
+
+    //println!("{:?}", solution);
+
+    let solution = solution[0] + solution[1] + solution[2];
+    Ok(solution as u64)
 }
 
 pub fn day_24() -> Result<()> {
@@ -239,9 +295,12 @@ pub fn day_24() -> Result<()> {
     }
     eprintln!("result day 24 part 1: {}", result_part1);
     assert_eq!(result_part1, 17_776);
-    
+
     // task 2
-    solve_task_2(&hailstones)?;
+    let result_part2 = solve_task_2(&hailstones)?;
+    eprintln!("result day 24 part 2: {}", result_part2);
+    assert_eq!(result_part2, 948_978_092_202_212);
+
     Ok(())
 }
 
@@ -277,5 +336,76 @@ mod tests {
         assert_eq!(result_part1, 2);
 
         Ok(())
+    }
+
+    #[test]
+    fn test_matrix_inversion() {
+        let input = include_str!("../../assets/day_24.txt");
+        let hailstones: Vec<HailStone> = input.lines().map(HailStone::from).collect();
+
+        let (x1, y1, z1, vx1, vy1, vz1) = hailstones[0].as_tuple();
+        let (x2, y2, z2, vx2, vy2, vz2) = hailstones[1].as_tuple();
+        let (x3, y3, z3, vx3, vy3, vz3) = hailstones[2].as_tuple();
+
+        // Jacobian of F
+        let jacobi = |v: Vector6<f64>| {
+            Matrix6::new(
+                //  vy1 - vys  ,     vxs  - vx1,     0         , ys - y1  , x1 - xs  , 0
+                vy1 - v[4],
+                v[3] - vx1,
+                0.,
+                v[1] - y1,
+                x1 - v[0],
+                0.,
+                //  vy2 - vys ,      vxs - vx2 , 0         , ys - y2  , x2 - xs  , 0
+                vy2 - v[4],
+                v[3] - vx2,
+                0.,
+                v[1] - y2,
+                x2 - v[0],
+                0.,
+                // vz3 - vzs, 0        , vxs - vx3, zs - z3, 0      , x3 - xs
+                vz3 - v[5],
+                0.,
+                v[3] - vx3,
+                v[2] - z3,
+                0.,
+                x3 - v[0],
+                // vz1 - vzs, 0        , vxs - vx1, zs - z1, 0      , x1 - xs
+                vz1 - v[5],
+                0.,
+                v[3] - vx1,
+                v[2] - z1,
+                0.,
+                x1 - v[0],
+                // 0        , vz2 - vzs , vys - vy2 , 0        , zs - z2  , y2 - ys
+                0.,
+                vz2 - v[5],
+                v[4] - vy2,
+                0.,
+                v[2] - z2,
+                y2 - v[1],
+                // 0        , vz3 - vzs , vys - vy3 , 0        , zs - z3  , y3 - ys
+                0.,
+                vz3 - v[5],
+                v[4] - vy3,
+                0.,
+                v[2] - z3,
+                y3 - v[1],
+            )
+        };
+
+        let x_start = (x1 + x2 + x3) / 3.;
+        let y_start = (y1 + y2 + y3) / 3.;
+        let z_start = (z1 + z2 + z3) / 3.;
+        let vx_start = (vx1 + vx2 + vx3) / 3.;
+        let vy_start = (vy1 + vy2 + vy3) / 3.;
+        let vz_start = (vz1 + vz2 + vz3) / 3.;
+
+        let x0 = Vector6::new(x_start, y_start, z_start, vx_start, vy_start, vz_start);
+
+        eprintln!("{:?}", jacobi(x0.clone()));
+        eprintln!("{:?}", jacobi(x0.clone()).try_inverse());
+        assert!(jacobi(x0).try_inverse().is_some());
     }
 }
